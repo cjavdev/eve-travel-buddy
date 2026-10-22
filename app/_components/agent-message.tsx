@@ -42,7 +42,9 @@ import {
 } from "@/components/ui/questionnaire";
 import { cn } from "@/lib/utils";
 import type { TripReel } from "@/agent/lib/reel";
+import type { TripDeck } from "@/agent/lib/itinerary";
 import { TripReels } from "./trip-reels";
+import { TripSlides } from "./trip-slides";
 
 export type AgentInputResponse = {
   readonly optionId?: string;
@@ -148,9 +150,11 @@ function AgentMessagePart({
       }
 
       const reels = tripReelsFrom(part);
+      const deck = tripDeckFrom(part);
       return (
         <>
           {reels ? <TripReels reels={reels} /> : null}
+          {deck ? <TripSlides deck={deck} /> : null}
           <Tool>
             <ToolHeader
               state={part.state}
@@ -472,6 +476,12 @@ function tripReelsFrom(part: EveDynamicToolPart): readonly TripReel[] | undefine
   if (part.toolName !== "trip_reels" || part.state !== "output-available") return undefined;
   const reels = (part.output as { reels?: TripReel[] } | undefined)?.reels;
   return Array.isArray(reels) && reels.length > 0 ? reels : undefined;
+}
+
+// plan_days streams progress snapshots and ends with the deck; show the slides once it's there.
+function tripDeckFrom(part: EveDynamicToolPart): TripDeck | undefined {
+  if (part.toolName !== "plan_days" || part.state !== "output-available") return undefined;
+  return (part.output as { deck?: TripDeck | null } | undefined)?.deck ?? undefined;
 }
 
 function partKey(part: EveMessagePart, index: number): string {
