@@ -41,6 +41,8 @@ import {
   QuestionnaireTitle,
 } from "@/components/ui/questionnaire";
 import { cn } from "@/lib/utils";
+import type { TripReel } from "@/agent/lib/reel";
+import { TripReels } from "./trip-reels";
 
 export type AgentInputResponse = {
   readonly optionId?: string;
@@ -145,8 +147,10 @@ function AgentMessagePart({
         );
       }
 
+      const reels = tripReelsFrom(part);
       return (
         <>
+          {reels ? <TripReels reels={reels} /> : null}
           <Tool>
             <ToolHeader
               state={part.state}
@@ -461,6 +465,13 @@ function InputRequestActions({
       )}
     </div>
   );
+}
+
+// The trip_reels tool returns reel JSON; play it as a video feed above the tool card.
+function tripReelsFrom(part: EveDynamicToolPart): readonly TripReel[] | undefined {
+  if (part.toolName !== "trip_reels" || part.state !== "output-available") return undefined;
+  const reels = (part.output as { reels?: TripReel[] } | undefined)?.reels;
+  return Array.isArray(reels) && reels.length > 0 ? reels : undefined;
 }
 
 function partKey(part: EveMessagePart, index: number): string {

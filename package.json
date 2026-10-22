@@ -16,10 +16,16 @@
     "build:eve": "eve build",
     "dev:eve": "eve dev",
     "start:eve": "eve start",
-    "test": "vitest run"
+    "test": "vitest run",
+    "reel:studio": "remotion studio remotion/index.ts",
+    "reel:render": "remotion render remotion/index.ts TripReel out/trip-reel.mp4"
   },
   "dependencies": {
     "@radix-ui/react-use-controllable-state": "1.2.2",
+    "@remotion/google-fonts": "4.0.538",
+    "@remotion/paths": "4.0.538",
+    "@remotion/player": "4.0.538",
+    "@remotion/transitions": "4.0.538",
     "@shadcn/react": "0.3.1",
     "@shikijs/core": "3.23.0",
     "@shikijs/engine-javascript": "3.23.0",
@@ -43,6 +49,7 @@
     "radix-ui": "1.4.3",
     "react": "19.2.6",
     "react-dom": "19.2.6",
+    "remotion": "4.0.538",
     "shiki": "3.23.0",
     "streamdown": "2.5.0",
     "tailwind-merge": "3.6.0",
@@ -51,6 +58,7 @@
     "zod": "4.5.4"
   },
   "devDependencies": {
+    "@remotion/cli": "4.0.538",
     "@types/leaflet": "^1.9.22",
     "@types/node": "24.x",
     "@types/react": "19.2.15",
