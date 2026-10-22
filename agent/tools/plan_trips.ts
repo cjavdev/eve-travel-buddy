@@ -2,7 +2,7 @@ import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { BUCKET_LIST } from "../lib/data/bucketList";
 import { PARTY } from "../lib/data/party";
-import { describePlan, planTrips } from "../lib/trips";
+import { describePlan, placesFor, planTrips } from "../lib/trips";
 
 export default defineTool({
   description:
@@ -18,12 +18,8 @@ export default defineTool({
       .describe(`Who's going, by id: ${PARTY.map((p) => `${p.id} (${p.name})`).join(", ")}. Omit for everyone.`),
   }),
   async execute({ placeIds, who }) {
-    const going = PARTY.filter((p) => !who?.length || who.includes(p.id));
-    const interests = going.map((p) => p.interest);
     // Only plan for the interests of the people going, and skip places none of them would love.
-    const places = BUCKET_LIST.filter((p) => !placeIds?.length || placeIds.includes(p.id))
-      .map((p) => ({ ...p, interests: p.interests.filter((i) => interests.includes(i)) }))
-      .filter((p) => p.interests.length > 0);
+    const { going, places } = placesFor(placeIds, who);
     const { sources, plans } = await planTrips(places);
     return {
       going: going.map((p) => p.name),

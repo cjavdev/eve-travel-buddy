@@ -1,5 +1,5 @@
 import { BUCKET_LIST } from './data/bucketList';
-import { HOME, peopleFor } from './data/party';
+import { HOME, PARTY, peopleFor } from './data/party';
 import { bestWindow, monthName } from './planner';
 import { fetchF1Calendar } from './sources/f1';
 import { mockTrip } from './sources/mockTravel';
@@ -15,6 +15,17 @@ async function settle<T>(promise: Promise<T>): Promise<{ value: T | null; ok: bo
   } catch {
     return { value: null, ok: false };
   }
+}
+
+// Who's going (by party id, empty for everyone) and the places worth planning for them:
+// each place keeps only the going people's interests, and places none of them would love drop out.
+export function placesFor(placeIds?: string[], who?: string[]) {
+  const going = PARTY.filter((p) => !who?.length || who.includes(p.id));
+  const interests = going.map((p) => p.interest);
+  const places = BUCKET_LIST.filter((p) => !placeIds?.length || placeIds.includes(p.id))
+    .map((p) => ({ ...p, interests: p.interests.filter((i) => interests.includes(i)) }))
+    .filter((p) => p.interests.length > 0);
+  return { going, places };
 }
 
 // Gathers every free data source for the given places and plans each one.

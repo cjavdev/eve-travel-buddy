@@ -11,8 +11,8 @@ export async function cached<T>(key: string, fetcher: () => Promise<T>, ttl = TT
   return value;
 }
 
-export async function getJson(url: string): Promise<any> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+export async function getJson(url: string, headers?: Record<string, string>): Promise<any> {
+  const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`${res.status} from ${new URL(url).host}`);
   return res.json();
 }

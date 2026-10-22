@@ -28,6 +28,8 @@ export interface Place {
   theater?: { scene: string; bestMonths: number[] };
   bike?: { route: string; bestMonths: number[] };
   beach?: { spot: string; bestMonths: number[] };
+  /** Photo search terms for the trip reel: a few sights for the place gallery, one per interest. */
+  photos?: { place: string[] } & Partial<Record<Interest, string>>;
   notes: string;
 }
 
