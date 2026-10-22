@@ -121,6 +121,11 @@ textarea {
   display: none;
 }
 
+/* OpenStreetMap tiles, inverted to a dark monochrome. */
+.trip-tiles {
+  filter: grayscale(1) invert(1) brightness(0.9) contrast(1.15);
+}
+
 /* White triangle pins, after the Vercel mark. */
 .trip-pin {
   position: relative;
