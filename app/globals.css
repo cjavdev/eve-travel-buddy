@@ -33,51 +33,27 @@
 }
 
 :root {
-  color-scheme: light;
-  /* Soft neutral page with white elevated surfaces so cards/composer pop. */
-  --background: oklch(0.971 0 0);
-  --foreground: oklch(0.16 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0 0);
-  --primary: oklch(0.19 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.94 0 0);
-  --secondary-foreground: oklch(0.19 0 0);
-  --muted: oklch(0.94 0 0);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.94 0 0);
-  --accent-foreground: oklch(0.19 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.916 0 0);
-  --input: oklch(0.916 0 0);
-  --ring: oklch(0.708 0 0);
-  --radius: 0.625rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-  }
+  /* Vercel-style monochrome: pure black canvas, near-black surfaces, hairline borders. */
+  color-scheme: dark;
+  --background: #000000;
+  --foreground: #ededed;
+  --card: #0a0a0a;
+  --card-foreground: #ededed;
+  --popover: #0a0a0a;
+  --popover-foreground: #ededed;
+  --primary: #ededed;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #ededed;
+  --muted: #1a1a1a;
+  --muted-foreground: #a1a1a1;
+  --accent: #1f1f1f;
+  --accent-foreground: #ededed;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: #1f1f1f;
+  --input: #2e2e2e;
+  --ring: #a1a1a1;
+  --radius: 0.5rem;
 }
 
 * {
@@ -101,4 +77,92 @@ button,
 input,
 textarea {
   font: inherit;
+}
+
+/* Leaflet, monochrome to match. */
+.leaflet-container {
+  background: #000 !important;
+  font-family: var(--font-sans) !important;
+}
+.leaflet-bar {
+  border: 1px solid #2e2e2e !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+  box-shadow: none !important;
+}
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background: #0a0a0a !important;
+  color: #ededed !important;
+  border-bottom-color: #2e2e2e !important;
+}
+.leaflet-bar a:hover {
+  background: #1a1a1a !important;
+}
+.leaflet-control-attribution {
+  background: rgb(0 0 0 / 0.6) !important;
+  color: #666 !important;
+  font-size: 10px;
+}
+.leaflet-control-attribution a {
+  color: #a1a1a1 !important;
+}
+.leaflet-tooltip.trip-tooltip {
+  background: #0a0a0a;
+  color: #ededed;
+  border: 1px solid #2e2e2e;
+  border-radius: 6px;
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.6);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 8px;
+}
+.leaflet-tooltip.trip-tooltip::before {
+  display: none;
+}
+
+/* White triangle pins, after the Vercel mark. */
+.trip-pin {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.trip-pin svg {
+  filter: drop-shadow(0 0 6px rgb(255 255 255 / 0.35));
+  transition: transform 150ms ease;
+}
+.trip-pin:hover svg {
+  transform: translateY(-2px) scale(1.08);
+}
+.trip-pin[data-selected="true"] svg {
+  filter: drop-shadow(0 0 14px rgb(255 255 255 / 0.8));
+}
+.trip-pin[data-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border: 1px solid rgb(255 255 255 / 0.5);
+  border-radius: 9999px;
+  animation: trip-pulse 1.8s ease-out infinite;
+}
+.trip-pin-label {
+  position: absolute;
+  top: 100%;
+  margin-top: 4px;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a1a1a1;
+}
+@keyframes trip-pulse {
+  from {
+    opacity: 0.9;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.4);
+  }
 }

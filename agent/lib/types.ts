@@ -1,4 +1,4 @@
-export type Interest = 'racing' | 'theater' | 'bike';
+export type Interest = 'racing' | 'theater' | 'bike' | 'beach';
 
 export interface Person {
   id: string;
@@ -27,6 +27,7 @@ export interface Place {
   racing?: RaceEvent[];
   theater?: { scene: string; bestMonths: number[] };
   bike?: { route: string; bestMonths: number[] };
+  beach?: { spot: string; bestMonths: number[] };
   notes: string;
 }
 
@@ -45,11 +46,16 @@ export interface Show {
   date: string;
   venue?: string;
   url?: string;
+  /** A made-up listing (see sources/shows.ts), not a real ticket. */
+  mock?: boolean;
 }
 
 export interface MonthClimate {
   month: number;
   avgHighC: number | null;
   rainyDays: number | null;
+  /** 0..1 for long rides. */
   score: number;
+  /** 0..1 for beach days. */
+  beachScore: number;
 }

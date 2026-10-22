@@ -3,11 +3,11 @@ import { HOME, peopleFor } from './data/party';
 import { bestWindow, monthName } from './planner';
 import { fetchF1Calendar } from './sources/f1';
 import { mockTrip } from './sources/mockTravel';
-import { fetchShows, hasTicketmasterKey } from './sources/shows';
+import { fetchShows } from './sources/shows';
 import { fetchRideClimate } from './sources/weather';
 import type { Place } from './types';
 
-export type SourceStatus = 'live' | 'fallback' | 'off';
+export type SourceStatus = 'live' | 'fallback' | 'mock';
 
 async function settle<T>(promise: Promise<T>): Promise<{ value: T | null; ok: boolean }> {
   try {
@@ -23,21 +23,22 @@ export async function planTrips(places: Place[] = BUCKET_LIST, today = new Date(
   const races = await fetchF1Calendar(today);
   const plans = await Promise.all(
     places.map(async (place) => {
-      const climate = place.interests.includes('bike') ? await settle(fetchRideClimate(place, today)) : null;
-      const shows = place.interests.includes('theater') ? await settle(fetchShows(place)) : null;
+      const needsWeather = place.interests.includes('bike') || place.interests.includes('beach');
+      const climate = needsWeather ? await settle(fetchRideClimate(place, today)) : null;
+      const shows = place.interests.includes('theater') ? await settle(fetchShows(place, today)) : null;
       const window = bestWindow(place, { today, races, shows: shows?.value ?? null, climate: climate?.value ?? null });
       const people = peopleFor(place.interests);
       const travelers = people.reduce((n, p) => n + p.travelers, 0);
       const trip = mockTrip(HOME, place, { travelers, nights: 3, isEventWeekend: window?.anchored });
-      return { place, people, window, trip, travelers, climateOk: climate?.ok, showsOk: shows?.ok };
+      return { place, people, window, trip, travelers, climateOk: climate?.ok };
     }),
   );
   const sources = {
     racing: (races.length ? 'live' : 'fallback') as SourceStatus,
     weather: (plans.some((p) => p.climateOk) ? 'live' : 'fallback') as SourceStatus,
-    shows: (hasTicketmasterKey() ? (plans.some((p) => p.showsOk) ? 'live' : 'fallback') : 'off') as SourceStatus,
+    shows: 'mock' as SourceStatus,
   };
-  return { home: HOME, sources, plans: plans.map(({ climateOk, showsOk, ...rest }) => rest) };
+  return { home: HOME, sources, plans: plans.map(({ climateOk, ...rest }) => rest) };
 }
 
 export type TripPlans = Awaited<ReturnType<typeof planTrips>>;

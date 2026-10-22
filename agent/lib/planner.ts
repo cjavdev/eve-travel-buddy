@@ -26,6 +26,7 @@ interface Candidate extends YearMonth {
   detail: string;
   url?: string;
   live: boolean;
+  mock?: boolean;
 }
 
 interface Fit {
@@ -59,10 +60,22 @@ function monthsAway({ year, month }: YearMonth, today: Date) {
   return (year - today.getFullYear()) * 12 + (month - (today.getMonth() + 1));
 }
 
-function bikeDetail(month: number, climate: MonthClimate[] | null) {
+// Weather-driven interests: which score to read, what to call the activity, and where.
+const WEATHER = {
+  bike: { score: (c: MonthClimate) => c.score, activity: 'riding', where: (p: Place) => p.bike },
+  beach: { score: (c: MonthClimate) => c.beachScore, activity: 'beach', where: (p: Place) => p.beach },
+} as const;
+type WeatherInterest = keyof typeof WEATHER;
+
+function weatherDetail(kind: WeatherInterest, month: number, climate: MonthClimate[] | null) {
   const c = climate?.find((x) => x.month === month);
-  if (!c || c.avgHighC == null) return `${monthName(month)} is a good riding month`;
+  if (!c || c.avgHighC == null) return `${monthName(month)} is a good ${WEATHER[kind].activity} month`;
   return `${monthName(month)}: highs around ${Math.round(c.avgHighC)}°C, about ${c.rainyDays} wet days`;
+}
+
+function weatherTitle(kind: WeatherInterest, place: Place) {
+  const spot = WEATHER[kind].where(place);
+  return spot && 'route' in spot ? spot.route : (spot?.spot ?? '');
 }
 
 // Candidate windows each interest proposes on its own.
@@ -96,7 +109,8 @@ function candidates(place: Place, today: Date, races: Race[], shows: Show[] | nu
       const show = shows.find((s) => s.date >= todayStr) ?? shows[0];
       out.push({
         ...ym(show.date), kind: 'theater', anchored: true, start: show.date, end: show.date,
-        title: show.name, detail: `${show.date}${show.venue ? ` at ${show.venue}` : ''}`, url: show.url, live: true,
+        title: show.name, detail: `${show.date}${show.venue ? ` at ${show.venue}` : ''}`, url: show.url,
+        live: !show.mock, mock: show.mock,
       });
     } else {
       for (const m of place.theater.bestMonths) {
@@ -108,14 +122,17 @@ function candidates(place: Place, today: Date, races: Race[], shows: Show[] | nu
     }
   }
 
-  if (place.interests.includes('bike') && place.bike) {
+  for (const kind of Object.keys(WEATHER) as WeatherInterest[]) {
+    const spot = WEATHER[kind].where(place);
+    if (!place.interests.includes(kind) || !spot) continue;
+    const score = WEATHER[kind].score;
     const months = climate
-      ? climate.filter((c) => c.score >= 0.6).sort((a, b) => b.score - a.score).slice(0, 4).map((c) => c.month)
-      : place.bike.bestMonths;
+      ? climate.filter((c) => score(c) >= 0.6).sort((a, b) => score(b) - score(a)).slice(0, 4).map((c) => c.month)
+      : spot.bestMonths;
     for (const m of months) {
       out.push({
-        ...nextOccurrence(m, today), kind: 'bike', anchored: false,
-        title: place.bike.route, detail: bikeDetail(m, climate), live: Boolean(climate),
+        ...nextOccurrence(m, today), kind, anchored: false,
+        title: weatherTitle(kind, place), detail: weatherDetail(kind, m, climate), live: Boolean(climate),
       });
     }
   }
@@ -131,9 +148,10 @@ function fit(interest: Interest, when: Candidate, place: Place, all: Candidate[]
     // Big theater scenes run year-round, just not at their best.
     return { strength: 0.4, reason: `${place.theater.scene} runs year-round`, title: place.theater.scene };
   }
-  if (interest === 'bike' && climate && place.bike) {
+  if ((interest === 'bike' || interest === 'beach') && climate && WEATHER[interest].where(place)) {
     const c = climate.find((x) => x.month === when.month);
-    if (c && c.score >= 0.4) return { strength: c.score, reason: bikeDetail(when.month, climate), title: place.bike.route };
+    const strength = c ? WEATHER[interest].score(c) : 0;
+    if (strength >= 0.4) return { strength, reason: weatherDetail(interest, when.month, climate), title: weatherTitle(interest, place) };
   }
   return { strength: 0, reason: null };
 }

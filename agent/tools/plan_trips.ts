@@ -6,7 +6,7 @@ import { describePlan, planTrips } from "../lib/trips";
 
 export default defineTool({
   description:
-    "Find the best upcoming travel window for bucket-list places, using live F1 dates, last year's riding weather, and Ticketmaster shows. Returns why each window fits each person and a mock cost.",
+    "Find the best upcoming travel window for bucket-list places, using live F1 dates, last year's riding weather, and mock show listings. Returns why each window fits each person and a mock cost.",
   inputSchema: z.object({
     placeIds: z
       .array(z.string())
@@ -38,6 +38,7 @@ export default defineTool({
           end: plan.window.end,
           event: plan.window.title,
           confirmedDate: plan.window.live,
+          mockListing: plan.window.mock ?? false,
         },
         mockCost: plan.trip,
       })),
