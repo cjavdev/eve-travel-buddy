@@ -7,6 +7,8 @@ import { parseEvents } from '../src/sources/shows.js';
 
 const today = new Date('2026-10-22T12:00:00Z');
 const place = (id) => BUCKET_LIST.find((p) => p.id === id);
+const bikeOnly = { id: 'girona', name: 'Girona', lat: 41.98, lng: 2.82, interests: ['bike'], bike: { route: 'Rocacorba', bestMonths: [4] } };
+const theaterOnly = { id: 'nyc', name: 'New York City', lat: 40.76, lng: -73.98, interests: ['theater'], theater: { scene: 'Broadway', bestMonths: [6] } };
 
 describe('nextOccurrence', () => {
   it('rolls to next year for this or earlier months', () => {
@@ -18,30 +20,37 @@ describe('nextOccurrence', () => {
 
 describe('bestWindow', () => {
   it('uses a live race weekend when the calendar has one', () => {
-    const races = [{ circuitId: 'villeneuve', raceName: 'Canadian Grand Prix', date: '2027-06-13', url: 'x' }];
-    const w = bestWindow(place('montreal'), { today, races });
-    expect(w).toMatchObject({ kind: 'f1', year: 2027, month: 6, start: '2027-06-11', end: '2027-06-13', live: true });
-    // June is also a seeded riding month, so the parents fit too.
+    const races = [{ circuitId: 'zandvoort', raceName: 'Dutch Grand Prix', date: '2027-08-29', url: 'x' }];
+    const w = bestWindow(place('netherlands'), { today, races });
+    expect(w).toMatchObject({ kind: 'f1', year: 2027, month: 8, start: '2027-08-27', end: '2027-08-29', live: true });
+    // August is also a seeded riding month, so the parents fit too.
     expect(w.who.map((f) => f.person.id).sort()).toEqual(['logan', 'parents']);
   });
 
   it('ignores races that already happened and falls back to the typical month', () => {
-    const races = [{ circuitId: 'americas', raceName: 'United States Grand Prix', date: '2026-10-18' }];
-    const w = bestWindow(place('austin'), { today, races });
-    expect(w).toMatchObject({ kind: 'f1', year: 2027, month: 10, live: false });
+    const races = [{ circuitId: 'suzuka', raceName: 'Japanese Grand Prix', date: '2026-04-05' }];
+    const w = bestWindow(place('tokyo'), { today, races });
+    expect(w).toMatchObject({ kind: 'f1', year: 2027, month: 4, live: false });
+  });
+
+  it('uses the typical month for non-F1 races even when the calendar loads', () => {
+    const races = [{ circuitId: 'villeneuve', raceName: 'Canadian Grand Prix', date: '2027-06-13' }];
+    const w = bestWindow(place('toronto'), { today, races });
+    expect(w).toMatchObject({ kind: 'f1', title: 'Honda Indy Toronto', year: 2027, month: 7, live: false });
+    expect(w.who.map((f) => f.person.id).sort()).toEqual(['greyson', 'logan', 'parents']);
   });
 
   it('picks a riding month from climate data for bike-only places', () => {
     const climate = Array.from({ length: 12 }, (_, i) => ({ month: i + 1, avgHighC: 10, rainyDays: 12, score: 0.2 }));
     climate[4] = { month: 5, avgHighC: 23, rainyDays: 3, score: 0.95 };
-    const w = bestWindow(place('girona'), { today, climate });
+    const w = bestWindow(bikeOnly, { today, climate });
     expect(w).toMatchObject({ kind: 'bike', year: 2027, month: 5, live: true });
     expect(w.who[0].reason).toContain('23°C');
   });
 
   it('prefers a real show date for theater places', () => {
     const shows = [{ name: 'Hamilton', date: '2026-12-05', venue: 'Richard Rodgers', url: 'u' }];
-    const w = bestWindow(place('nyc'), { today, shows });
+    const w = bestWindow(theaterOnly, { today, shows });
     expect(w).toMatchObject({ kind: 'theater', title: 'Hamilton', start: '2026-12-05' });
   });
 

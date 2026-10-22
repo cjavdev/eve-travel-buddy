@@ -27,7 +27,8 @@ function candidates(place, { today, races, shows, climate }) {
   const out = [];
 
   if (place.interests.includes('f1')) {
-    const race = races.find((r) => r.circuitId === place.f1.circuitId && r.date >= todayStr);
+    // Non-F1 races (no circuitId) aren't in the Jolpica calendar, so they always use the typical month.
+    const race = place.f1.circuitId && races.find((r) => r.circuitId === place.f1.circuitId && r.date >= todayStr);
     if (race) {
       out.push({
         ...ym(race.date), kind: 'f1', anchored: true,
@@ -37,7 +38,7 @@ function candidates(place, { today, races, shows, climate }) {
     } else {
       out.push({
         ...nextOccurrence(place.f1.typicalMonth, today), kind: 'f1', anchored: true,
-        title: place.f1.raceName, detail: `Usually in ${monthName(place.f1.typicalMonth)}; date not published yet`,
+        title: place.f1.raceName, detail: `Usually in ${monthName(place.f1.typicalMonth)}${place.f1.circuitId ? '; date not published yet' : ''}`,
         live: false,
       });
     }

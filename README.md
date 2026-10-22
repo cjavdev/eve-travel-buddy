@@ -32,7 +32,7 @@ Every source has a fallback, so the map still works offline: F1 uses each race's
 
 ## Where things live
 
-- `src/data/bucketList.js`: the seed bucket list. Add a place with its interests and fallback months.
+- `src/data/bucketList.js`: the seed bucket list. Tokyo, Toronto, and the Netherlands. Add a place with its interests and fallback months.
 - `src/data/party.js`: who's going, their colors, and `HOME` for the mock flight origin.
 - `src/planner.js`: picks the best upcoming window, favoring months that serve the most people and real dated events.
 - `src/sources/`: one file per data source.
