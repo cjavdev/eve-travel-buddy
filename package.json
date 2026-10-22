@@ -1,0 +1,28 @@
+{
+  "name": "eve-travel-buddy",
+  "version": "1.0.0",
+  "description": "Family travel agent: bucket-list map",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cjavdev/eve-travel-buddy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cjavdev/eve-travel-buddy/issues"
+  },
+  "homepage": "https://github.com/cjavdev/eve-travel-buddy#readme",
+  "dependencies": {
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "vite": "^6.4.5",
+    "vitest": "^3.2.7"
+  },
+  "private": true,
+  "type": "module"
+}
