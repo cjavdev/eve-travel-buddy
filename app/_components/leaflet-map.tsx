@@ -30,7 +30,8 @@ function pinIcon(pin: MapPin, selected: boolean) {
   });
 }
 
-// Leaflet with CARTO's dark OpenStreetMap tiles: free and keyless. Loaded client-only (see trip-map.tsx).
+// Leaflet with standard OpenStreetMap tiles: free and keyless. CSS in globals.css
+// turns them monochrome and dark (see .trip-tiles). Loaded client-only (see trip-map.tsx).
 export default function LeafletMap({
   pins,
   selectedId,
@@ -49,11 +50,10 @@ export default function LeafletMap({
     if (!container.current || map.current) return;
     map.current = L.map(container.current, { worldCopyJump: true, zoomControl: false }).setView([35, 0], 2);
     L.control.zoom({ position: "bottomright" }).addTo(map.current);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
-      subdomains: "abcd",
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      className: "trip-tiles",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map.current);
     layer.current = L.layerGroup().addTo(map.current);
     return () => {

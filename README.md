@@ -32,7 +32,7 @@ Vercel deploys every push to `main` (team MAIC-Vercel-Jfish, Next.js preset). On
 
 | Data | Source | Key |
 | --- | --- | --- |
-| Map tiles | OpenStreetMap via Leaflet | none |
+| Map tiles | OpenStreetMap via Leaflet, made monochrome with a CSS filter | none |
 | F1 race dates | [Jolpica](https://github.com/jolpica/jolpica-f1) (Ergast successor) | none |
 | Riding and beach weather | [Open-Meteo](https://open-meteo.com) archive, last full year scored by month | none |
 | Theater shows | Mock Ticketmaster-style listings (`agent/lib/sources/shows.ts`) | none |
