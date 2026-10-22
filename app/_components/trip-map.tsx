@@ -1,24 +1,34 @@
 "use client";
 
-import { MessageCircleIcon } from "lucide-react";
+import { ArrowUpRightIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { TripPlans } from "@/agent/lib/trips";
 import { PARTY } from "@/agent/lib/data/party";
 import { monthName } from "@/agent/lib/planner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const LeafletMap = dynamic(() => import("./leaflet-map"), { ssr: false });
 
 const STATUS_LABEL = {
   live: "live",
-  fallback: "offline, using typical months",
-  off: "add TICKETMASTER_KEY for live shows",
+  fallback: "typical months",
+  mock: "mock",
 } as const;
 
 const money = (n: number) => (n === 0 ? "drive" : `$${n.toLocaleString()}`);
+
+function Triangle({ className }: { readonly className?: string }) {
+  return (
+    <svg aria-hidden="true" className={className} viewBox="0 0 76 65">
+      <path d="M37.6 0L75.2 65H0z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function Eyebrow({ children }: { readonly children: React.ReactNode }) {
+  return <p className="font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">{children}</p>;
+}
 
 export function TripMap() {
   const [data, setData] = useState<TripPlans>();
@@ -42,8 +52,8 @@ export function TripMap() {
           name: plan.place.name,
           lat: plan.place.lat,
           lng: plan.place.lng,
-          colors: plan.people.map((p) => p.color),
-          tooltip: plan.window ? `${plan.window.label} · ${plan.window.title}` : plan.place.name,
+          weight: plan.people.length,
+          tooltip: plan.window ? `${monthName(plan.window.month)} ${plan.window.year} · ${plan.window.title}` : plan.place.name,
         })),
     [data, active],
   );
@@ -59,99 +69,197 @@ export function TripMap() {
 
   return (
     <main className="flex h-dvh flex-col bg-background text-foreground">
-      <header className="flex flex-wrap items-center gap-3 border-b px-4 py-2.5">
-        <h1 className="font-semibold text-lg tracking-tight">Bucket-list map</h1>
-        <div aria-label="Filter by who's going" className="flex flex-wrap gap-2">
-          {PARTY.map((p) => (
-            <button
-              aria-pressed={active.has(p.id)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-opacity",
-                !active.has(p.id) && "opacity-40",
-              )}
-              key={p.id}
-              onClick={() => toggle(p.id)}
-              type="button"
-            >
-              <span className="size-2.5 rounded-full" style={{ background: p.color }} />
-              {p.emoji} {p.name}
-            </button>
-          ))}
-        </div>
-        <Button asChild className="ml-auto" size="sm" variant="outline">
-          <a href="/s">
-            <MessageCircleIcon className="size-4" />
-            Ask Travel Buddy
-          </a>
-        </Button>
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4 sm:px-6">
+        <Triangle className="size-5 text-foreground" />
+        <span className="text-muted-foreground/50 text-xl font-extralight">/</span>
+        <span className="font-medium text-sm">Travel Buddy</span>
+        <span className="hidden text-muted-foreground/50 text-xl font-extralight sm:inline">/</span>
+        <span className="hidden text-muted-foreground text-sm sm:inline">Bucket list</span>
+        <a
+          className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-foreground px-3 font-medium text-background text-sm transition-opacity hover:opacity-85"
+          href="/s"
+        >
+          Ask Travel Buddy
+          <ArrowUpRightIcon className="size-3.5" />
+        </a>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-        <div className="relative min-h-[300px] flex-1">
+        <div className="relative min-h-[320px] flex-1 overflow-hidden">
           <LeafletMap onSelect={onSelect} pins={pins} selectedId={selectedId} />
+          {/* Vercel-style grid and vignette over the map. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-[400] opacity-[0.07]"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)",
+              backgroundSize: "64px 64px",
+            }}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-[400]"
+            style={{ background: "radial-gradient(ellipse at center, transparent 45%, rgb(0 0 0 / 0.75) 100%)" }}
+          />
+
+          <div className="absolute top-4 left-4 z-[500] flex flex-col gap-3">
+            <div>
+              <h1 className="font-semibold text-3xl tracking-[-0.04em] sm:text-4xl">Where to next.</h1>
+              <p className="mt-1 max-w-xs text-muted-foreground text-sm">
+                Every place on the list, timed to the races, shows, rides, and beach days.
+              </p>
+            </div>
+            <div
+              aria-label="Filter by who's going"
+              className="flex w-fit max-w-[calc(100vw-2rem)] flex-wrap rounded-lg border border-[#2e2e2e] bg-black/70 p-1 backdrop-blur"
+            >
+              {PARTY.map((p) => (
+                <button
+                  aria-pressed={active.has(p.id)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1 text-xs transition-colors",
+                    active.has(p.id) ? "bg-[#1f1f1f] text-foreground" : "text-muted-foreground hover:text-foreground",
+                  )}
+                  key={p.id}
+                  onClick={() => toggle(p.id)}
+                  type="button"
+                >
+                  <span className="size-1.5 rounded-full" style={{ background: p.color }} />
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-        <aside className="max-h-[50vh] overflow-y-auto border-t p-4 md:max-h-none md:w-96 md:border-t-0 md:border-l">
+
+        <aside className="max-h-[55vh] overflow-y-auto border-t bg-background md:max-h-none md:w-[400px] md:border-t-0 md:border-l">
           {error ? (
-            <p className="text-destructive text-sm">Couldn't load trips: {error}</p>
+            <p className="p-6 text-destructive text-sm">Couldn't load trips: {error}</p>
           ) : !data ? (
-            <p className="text-muted-foreground text-sm">Checking race calendars and weather…</p>
+            <div className="p-6">
+              <Eyebrow>Loading</Eyebrow>
+              <p className="mt-2 text-muted-foreground text-sm">Checking race calendars and weather…</p>
+            </div>
           ) : !selected ? (
-            <p className="text-muted-foreground text-sm">Pick a pin to see the best upcoming window and who it's for.</p>
+            <PlaceList data={data} onSelect={onSelect} />
           ) : (
-            <PlaceDetails home={data.home.code} plan={selected} />
+            <PlaceDetails home={data.home.code} onBack={() => setSelectedId(undefined)} plan={selected} />
           )}
         </aside>
       </div>
 
-      <footer className="border-t px-4 py-1.5 text-muted-foreground text-xs">
-        {data
-          ? `Races (F1 dates from Jolpica): ${STATUS_LABEL[data.sources.racing]} · Ride weather (Open-Meteo): ${STATUS_LABEL[data.sources.weather]} · Shows (Ticketmaster): ${STATUS_LABEL[data.sources.shows]} · Flights and hotels: mock`
-          : "Loading data sources…"}
+      <footer className="flex h-9 shrink-0 items-center gap-4 overflow-x-auto whitespace-nowrap border-t px-4 font-mono text-[11px] text-muted-foreground sm:px-6">
+        {data ? (
+          <>
+            <Status label="Races · Jolpica" state={data.sources.racing} />
+            <Status label="Weather · Open-Meteo" state={data.sources.weather} />
+            <Status label="Shows · Ticketmaster" state={data.sources.shows} />
+            <span>Flights + hotels · mock</span>
+          </>
+        ) : (
+          "Loading data sources…"
+        )}
       </footer>
     </main>
   );
 }
 
-function PlaceDetails({ plan, home }: { readonly plan: TripPlans["plans"][number]; readonly home: string }) {
-  const { place, people, window: w, trip, travelers } = plan;
-  if (!w) return <h2 className="font-semibold text-xl">{place.name}</h2>;
-  const dates = w.start ? (w.start === w.end ? w.start : `${w.start} to ${w.end}`) : `Sometime in ${monthName(w.month)}`;
+function Status({ label, state }: { readonly label: string; readonly state: keyof typeof STATUS_LABEL }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={cn("size-1.5 rounded-full", state === "live" ? "bg-foreground" : "bg-[#444]")} />
+      {label} <span className="text-[#666]">{STATUS_LABEL[state]}</span>
+    </span>
+  );
+}
+
+function PlaceList({ data, onSelect }: { readonly data: TripPlans; readonly onSelect: (id: string) => void }) {
+  return (
+    <div className="p-6">
+      <Eyebrow>Bucket list · {data.plans.length} places</Eyebrow>
+      <ul className="mt-4 divide-y divide-[#1f1f1f] border-y border-[#1f1f1f]">
+        {data.plans.map(({ place, window: w, people }) => (
+          <li key={place.id}>
+            <button
+              className="group flex w-full items-center gap-3 py-4 text-left"
+              onClick={() => onSelect(place.id)}
+              type="button"
+            >
+              <Triangle className="size-3 shrink-0 text-foreground" />
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium text-sm">{place.name}</span>
+                <span className="block truncate text-muted-foreground text-xs">
+                  {w ? `${monthName(w.month)} ${w.year} · ${w.title}` : "No window yet"}
+                </span>
+              </span>
+              <span className="flex -space-x-1">
+                {people.map((p) => (
+                  <span className="size-2.5 rounded-full ring-2 ring-black" key={p.id} style={{ background: p.color }} />
+                ))}
+              </span>
+              <ArrowUpRightIcon className="size-4 text-muted-foreground transition-colors group-hover:text-foreground" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function PlaceDetails({
+  plan,
+  home,
+  onBack,
+}: {
+  readonly plan: TripPlans["plans"][number];
+  readonly home: string;
+  readonly onBack: () => void;
+}) {
+  const { place, window: w, trip, travelers } = plan;
+  if (!w) return <h2 className="p-6 font-semibold text-xl">{place.name}</h2>;
+  const dates = w.start ? (w.start === w.end ? w.start : `${w.start} → ${w.end}`) : `Sometime in ${monthName(w.month)}`;
   const prompt = `Plan a trip to ${place.name} around ${w.title} in ${monthName(w.month)} ${w.year}. Who should come, and what should we do each day?`;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6 p-6">
+      <button className="w-fit font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em] hover:text-foreground" onClick={onBack} type="button">
+        ← All places
+      </button>
+
       <div>
-        <h2 className="font-semibold text-xl">{place.name}</h2>
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {people.map((p) => (
-            <span className="rounded-full px-2 py-0.5 text-white text-xs" key={p.id} style={{ background: p.color }}>
-              {p.emoji} {p.name}
-            </span>
-          ))}
-        </div>
+        <h2 className="font-semibold text-2xl tracking-[-0.03em]">{place.name}</h2>
+        <p className="mt-1 text-muted-foreground text-sm">{place.notes}</p>
       </div>
 
-      <section className="rounded-lg border p-3">
-        <p className="text-muted-foreground text-sm">Best upcoming window</p>
-        <p className="font-bold text-2xl">
-          {monthName(w.month)} {w.year}
-        </p>
-        <p className="font-medium">
-          {w.title}{" "}
-          {w.url ? (
-            <a className="text-sky-600 text-sm underline" href={w.url} rel="noopener" target="_blank">
-              details
-            </a>
-          ) : null}{" "}
-          <Badge variant={w.live ? "default" : "secondary"}>{w.live ? "live data" : "typical"}</Badge>
-        </p>
-        <p className="text-muted-foreground text-sm">{dates}</p>
-        <ul className="mt-3 grid gap-2">
+      <section className="rounded-lg border border-[#2e2e2e] bg-[#0a0a0a]">
+        <div className="border-[#1f1f1f] border-b p-4">
+          <div className="flex items-center justify-between">
+            <Eyebrow>Best upcoming window</Eyebrow>
+            <span className="rounded-full border border-[#2e2e2e] px-2 py-0.5 font-mono text-[10px] text-muted-foreground uppercase">
+              {w.mock ? "mock" : w.live ? "live" : "typical"}
+            </span>
+          </div>
+          <p className="mt-2 font-semibold text-4xl tracking-[-0.04em]">
+            {monthName(w.month)} {w.year}
+          </p>
+          <p className="mt-1 text-sm">
+            {w.title}
+            {w.url ? (
+              <a className="ml-1.5 inline-flex items-center text-muted-foreground hover:text-foreground" href={w.url} rel="noopener" target="_blank">
+                <ArrowUpRightIcon className="size-3.5" />
+              </a>
+            ) : null}
+          </p>
+          <p className="mt-0.5 font-mono text-muted-foreground text-xs">{dates}</p>
+        </div>
+        <ul className="divide-y divide-[#1f1f1f]">
           {w.who.map((f) => (
-            <li className="flex gap-2 text-sm" key={f.person.id}>
-              <span className="mt-1.5 size-2.5 shrink-0 rounded-full" style={{ background: f.person.color }} />
+            <li className="flex gap-3 px-4 py-3 text-sm" key={f.person.id}>
+              <span className="mt-1.5 size-2 shrink-0 rounded-full" style={{ background: f.person.color }} />
               <span className={cn(!f.strong && "text-muted-foreground")}>
-                <strong>{f.person.name}:</strong> {f.reason}
+                <span className="font-medium text-foreground">{f.person.name}</span>
+                <span className="text-muted-foreground"> — {f.reason}</span>
               </span>
             </li>
           ))}
@@ -159,27 +267,24 @@ function PlaceDetails({ plan, home }: { readonly plan: TripPlans["plans"][number
       </section>
 
       <section>
-        <h3 className="mb-1 font-medium">
-          Rough cost from {home} <Badge variant="secondary">mock</Badge>
-        </h3>
-        <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-sm">
-          <dt>Flights × {travelers}</dt>
+        <Eyebrow>Rough cost from {home} · mock</Eyebrow>
+        <dl className="mt-3 grid grid-cols-[1fr_auto] gap-y-2 font-mono text-sm">
+          <dt className="text-muted-foreground">Flights × {travelers}</dt>
           <dd>{money(trip.flightPerPerson * travelers)}</dd>
-          <dt>Hotel, 3 nights</dt>
+          <dt className="text-muted-foreground">Hotel × 3 nights</dt>
           <dd>{money(trip.hotelPerNight * 3)}</dd>
-          <dt className="font-semibold">Total</dt>
-          <dd className="font-semibold">{money(trip.total)}</dd>
+          <dt className="border-[#1f1f1f] border-t pt-2">Total</dt>
+          <dd className="border-[#1f1f1f] border-t pt-2 font-semibold">{money(trip.total)}</dd>
         </dl>
       </section>
 
-      <p className="text-muted-foreground text-sm">{place.notes}</p>
-
-      <Button asChild>
-        <a href={`/s?q=${encodeURIComponent(prompt)}`}>
-          <MessageCircleIcon className="size-4" />
-          Plan this with Travel Buddy
-        </a>
-      </Button>
+      <a
+        className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-foreground font-medium text-background text-sm transition-opacity hover:opacity-85"
+        href={`/s?q=${encodeURIComponent(prompt)}`}
+      >
+        Plan this with Travel Buddy
+        <ArrowUpRightIcon className="size-4" />
+      </a>
     </div>
   );
 }

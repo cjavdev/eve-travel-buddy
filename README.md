@@ -2,14 +2,15 @@
 
 A family trip planner built on [eve](https://eve.dev), Vercel's agent framework. It has two parts:
 
-- **Bucket-list map** (`/`): every place we want to go, pinned and colored by who would love it, with the best upcoming window, why it fits each person, and a rough cost.
+- **Bucket-list map** (`/`): every place we want to go, pinned as white triangles on a monochrome map, sized by how many of us would love it, with the best upcoming window, why it fits each person, and a rough cost.
 - **Travel Buddy agent** (`/s`): a chat agent that plans trips with the same data. Each pin has a "Plan this with Travel Buddy" button.
 
-| Who | Loves | Pin color |
+| Who | Loves | Tone |
 | --- | --- | --- |
-| Greyson | Theater | purple |
-| Logan | Car racing (any series) | red |
-| CJ & wife | Long bike rides | green |
+| Greyson | Theater | white |
+| Logan | Car racing (any series) | grey |
+| CJ & wife | Long bike rides | dark grey |
+| Travis & Lorena | Beach excursions | light grey |
 
 ## Run it
 
@@ -25,7 +26,7 @@ npm run dev:eve     # optional: chat with the agent in the terminal
 
 ## Deploy
 
-Import the repo at [vercel.com/new](https://vercel.com/new), or run `npx eve deploy`. On Vercel the agent reaches AI Gateway without a key. `agent/channels/eve.ts` currently allows anonymous chat for the demo; swap `none()` for real auth before sharing widely.
+Vercel deploys every push to `main` (team MAIC-Vercel-Jfish, Next.js preset). On Vercel the agent reaches AI Gateway without a key. `agent/channels/eve.ts` currently allows anonymous chat for the demo; swap `none()` for real auth before sharing widely.
 
 ## Data sources (all free)
 
@@ -33,8 +34,8 @@ Import the repo at [vercel.com/new](https://vercel.com/new), or run `npx eve dep
 | --- | --- | --- |
 | Map tiles | OpenStreetMap via Leaflet | none |
 | F1 race dates | [Jolpica](https://github.com/jolpica/jolpica-f1) (Ergast successor) | none |
-| Riding weather | [Open-Meteo](https://open-meteo.com) archive, last full year scored by month | none |
-| Theater shows | [Ticketmaster Discovery](https://developer.ticketmaster.com) free tier | optional `TICKETMASTER_KEY` env var |
+| Riding and beach weather | [Open-Meteo](https://open-meteo.com) archive, last full year scored by month | none |
+| Theater shows | Mock Ticketmaster-style listings (`agent/lib/sources/shows.ts`) | none |
 | Flights and hotels | Mocked from distance and event weekends | none |
 
 Every source has a fallback: races use their typical month (only F1 has a live calendar), and theater and riding use the seeded best months.

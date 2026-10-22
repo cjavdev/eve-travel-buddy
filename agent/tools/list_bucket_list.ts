@@ -5,7 +5,7 @@ import { HOME, peopleFor } from "../lib/data/party";
 
 export default defineTool({
   description:
-    "List the family's bucket-list places, who would love each one, and the races, theater, and bike routes there.",
+    "List the family's bucket-list places, who would love each one, and the races, theater, bike routes, and beaches there.",
   inputSchema: z.object({}),
   async execute() {
     return {
@@ -17,6 +17,7 @@ export default defineTool({
         racing: place.racing?.map((r) => `${r.series}: ${r.name}`),
         theater: place.theater?.scene,
         bike: place.bike?.route,
+        beach: place.beach?.spot,
         notes: place.notes,
       })),
     };

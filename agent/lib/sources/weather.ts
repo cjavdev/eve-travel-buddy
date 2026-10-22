@@ -2,7 +2,7 @@ import type { MonthClimate, Place } from '../types';
 import { cached, getJson } from './cache';
 
 // Open-Meteo historical archive: free and keyless. We use last full year's daily
-// weather as a stand-in for climate when scoring months for long rides.
+// weather as a stand-in for climate when scoring months for long rides and beach days.
 const BASE = 'https://archive-api.open-meteo.com/v1/archive';
 
 interface Daily {
@@ -35,6 +35,14 @@ export function rideScore({ avgHighC, rainyDays }: { avgHighC: number | null; ra
   return temp * 0.6 + dry * 0.4;
 }
 
+// 0..1, peaking around a 28°C high with few wet days.
+export function beachScore({ avgHighC, rainyDays }: { avgHighC: number | null; rainyDays: number | null }) {
+  if (avgHighC == null) return 0;
+  const temp = Math.max(0, 1 - Math.abs(avgHighC - 28) / 8);
+  const dry = Math.max(0, 1 - (rainyDays ?? 0) / 15);
+  return temp * 0.7 + dry * 0.3;
+}
+
 export async function fetchRideClimate(place: Place, today = new Date()): Promise<MonthClimate[]> {
   const year = today.getFullYear() - 1;
   return cached(`wx:${place.id}:${year}`, async () => {
@@ -47,6 +55,6 @@ export async function fetchRideClimate(place: Place, today = new Date()): Promis
       timezone: 'auto',
     });
     const json = await getJson(`${BASE}?${params}`);
-    return monthlyStats(json.daily).map((m) => ({ ...m, score: rideScore(m) }));
+    return monthlyStats(json.daily).map((m) => ({ ...m, score: rideScore(m), beachScore: beachScore(m) }));
   });
 }

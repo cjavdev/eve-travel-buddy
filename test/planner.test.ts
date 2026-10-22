@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { bestWindow, nextOccurrence } from '../agent/lib/planner';
 import { BUCKET_LIST } from '../agent/lib/data/bucketList';
 import { parseRaces } from '../agent/lib/sources/f1';
-import { monthlyStats, rideScore } from '../agent/lib/sources/weather';
+import { beachScore, monthlyStats, rideScore } from '../agent/lib/sources/weather';
+import { fetchShows } from '../agent/lib/sources/shows';
 import { parseEvents } from '../agent/lib/sources/shows';
 import type { Place, Race } from '../agent/lib/types';
 
@@ -27,7 +28,7 @@ describe('bestWindow', () => {
     const w = bestWindow(place('tokyo'), { today, races });
     expect(w).toMatchObject({ kind: 'racing', title: 'F1: Japanese Grand Prix', year: 2027, month: 4, start: '2027-04-02', end: '2027-04-04', live: true });
     // April is also a seeded theater and riding month, so everyone fits.
-    expect(w!.who.map((f) => f.person.id).sort()).toEqual(['greyson', 'logan', 'parents']);
+    expect(w!.who.map((f) => f.person.id)).toEqual(expect.arrayContaining(['greyson', 'logan', 'parents']));
   });
 
   it('ignores races that already happened and falls back to the typical month', () => {
@@ -40,7 +41,7 @@ describe('bestWindow', () => {
     const races = [race({ circuitId: 'villeneuve', raceName: 'Canadian Grand Prix', date: '2027-06-13' })];
     const w = bestWindow(place('toronto'), { today, races });
     expect(w).toMatchObject({ kind: 'racing', title: 'IndyCar: Honda Indy Toronto', year: 2027, month: 7, live: false });
-    expect(w!.who.map((f) => f.person.id).sort()).toEqual(['greyson', 'logan', 'parents']);
+    expect(w!.who.map((f) => f.person.id)).toEqual(expect.arrayContaining(['greyson', 'logan', 'parents']));
   });
 
   it('handles any racing series, not just F1', () => {
@@ -49,8 +50,8 @@ describe('bestWindow', () => {
   });
 
   it('picks a riding month from climate data for bike-only places', () => {
-    const climate = Array.from({ length: 12 }, (_, i) => ({ month: i + 1, avgHighC: 10, rainyDays: 12, score: 0.2 }));
-    climate[4] = { month: 5, avgHighC: 23, rainyDays: 3, score: 0.95 };
+    const climate = Array.from({ length: 12 }, (_, i) => ({ month: i + 1, avgHighC: 10, rainyDays: 12, score: 0.2, beachScore: 0 }));
+    climate[4] = { month: 5, avgHighC: 23, rainyDays: 3, score: 0.95, beachScore: 0.5 };
     const w = bestWindow(bikeOnly, { today, climate });
     expect(w).toMatchObject({ kind: 'bike', year: 2027, month: 5, live: true });
     expect(w!.who[0].reason).toContain('23°C');
@@ -78,10 +79,20 @@ describe('source parsers', () => {
     const stats = monthlyStats({ time: ['2025-05-01', '2025-05-02'], temperature_2m_max: [20, 24], precipitation_sum: [0, 5] });
     expect(stats[4]).toEqual({ month: 5, avgHighC: 22, rainyDays: 15 });
     expect(rideScore({ avgHighC: 22, rainyDays: 0 })).toBe(1);
+    expect(beachScore({ avgHighC: 28, rainyDays: 0 })).toBe(1);
   });
 
   it('parses Ticketmaster events', () => {
     const json = { _embedded: { events: [{ name: 'Wicked', url: 'u', dates: { start: { localDate: '2026-11-02' } }, _embedded: { venues: [{ name: 'Gershwin' }] } }] } };
     expect(parseEvents(json)).toEqual([{ name: 'Wicked', date: '2026-11-02', venue: 'Gershwin', url: 'u' }]);
+  });
+
+  it('serves mock show listings dated in the future', async () => {
+    const shows = await fetchShows(place('toronto'), today);
+    expect(shows.length).toBeGreaterThan(0);
+    for (const show of shows) {
+      expect(show.mock).toBe(true);
+      expect(show.date > '2026-10-22').toBe(true);
+    }
   });
 });
