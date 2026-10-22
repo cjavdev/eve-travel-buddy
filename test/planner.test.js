@@ -20,24 +20,29 @@ describe('nextOccurrence', () => {
 
 describe('bestWindow', () => {
   it('uses a live race weekend when the calendar has one', () => {
-    const races = [{ circuitId: 'zandvoort', raceName: 'Dutch Grand Prix', date: '2027-08-29', url: 'x' }];
-    const w = bestWindow(place('netherlands'), { today, races });
-    expect(w).toMatchObject({ kind: 'f1', year: 2027, month: 8, start: '2027-08-27', end: '2027-08-29', live: true });
-    // August is also a seeded riding month, so the parents fit too.
-    expect(w.who.map((f) => f.person.id).sort()).toEqual(['logan', 'parents']);
+    const races = [{ circuitId: 'suzuka', raceName: 'Japanese Grand Prix', date: '2027-04-04', url: 'x' }];
+    const w = bestWindow(place('tokyo'), { today, races });
+    expect(w).toMatchObject({ kind: 'racing', title: 'F1: Japanese Grand Prix', year: 2027, month: 4, start: '2027-04-02', end: '2027-04-04', live: true });
+    // April is also a seeded theater and riding month, so everyone fits.
+    expect(w.who.map((f) => f.person.id).sort()).toEqual(['greyson', 'logan', 'parents']);
   });
 
   it('ignores races that already happened and falls back to the typical month', () => {
     const races = [{ circuitId: 'suzuka', raceName: 'Japanese Grand Prix', date: '2026-04-05' }];
     const w = bestWindow(place('tokyo'), { today, races });
-    expect(w).toMatchObject({ kind: 'f1', year: 2027, month: 4, live: false });
+    expect(w).toMatchObject({ kind: 'racing', title: 'F1: Japanese Grand Prix at Suzuka', year: 2027, month: 4, live: false });
   });
 
-  it('uses the typical month for non-F1 races even when the calendar loads', () => {
+  it('uses the typical month for other series even when the calendar loads', () => {
     const races = [{ circuitId: 'villeneuve', raceName: 'Canadian Grand Prix', date: '2027-06-13' }];
     const w = bestWindow(place('toronto'), { today, races });
-    expect(w).toMatchObject({ kind: 'f1', title: 'Honda Indy Toronto', year: 2027, month: 7, live: false });
+    expect(w).toMatchObject({ kind: 'racing', title: 'IndyCar: Honda Indy Toronto', year: 2027, month: 7, live: false });
     expect(w.who.map((f) => f.person.id).sort()).toEqual(['greyson', 'logan', 'parents']);
+  });
+
+  it('handles any racing series, not just F1', () => {
+    const w = bestWindow(place('netherlands'), { today });
+    expect(w).toMatchObject({ kind: 'racing', title: 'MotoGP: Dutch TT at Assen', year: 2027, month: 6 });
   });
 
   it('picks a riding month from climate data for bike-only places', () => {

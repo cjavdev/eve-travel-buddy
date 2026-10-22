@@ -2,7 +2,7 @@
 // a place is colored by every party member whose interest it matches.
 export const PARTY = [
   { id: 'greyson', name: 'Greyson', interest: 'theater', color: '#8b5cf6', emoji: '🎭' },
-  { id: 'logan', name: 'Logan', interest: 'f1', color: '#ef4444', emoji: '🏎️' },
+  { id: 'logan', name: 'Logan', interest: 'racing', color: '#ef4444', emoji: '🏎️' },
   { id: 'parents', name: 'CJ & wife', interest: 'bike', color: '#10b981', emoji: '🚴' },
 ];
 

@@ -16,7 +16,7 @@ const state = {
   climate: {},
   active: new Set(PARTY.map((p) => p.id)),
   selected: null,
-  sources: { f1: 'loading', weather: 'loading', shows: hasTicketmasterKey ? 'loading' : 'off' },
+  sources: { racing: 'loading', weather: 'loading', shows: hasTicketmasterKey ? 'loading' : 'off' },
 };
 
 const map = L.map('map', { worldCopyJump: true }).setView([35, -40], 3);
@@ -133,7 +133,7 @@ function renderStatus() {
   const label = { loading: 'loading…', live: 'live', fallback: 'offline, using typical months', off: 'add VITE_TICKETMASTER_KEY for live shows' };
   const s = state.sources;
   document.getElementById('status').textContent =
-    `F1 calendar (Jolpica): ${label[s.f1]} · Ride weather (Open-Meteo): ${label[s.weather]} · Shows (Ticketmaster): ${label[s.shows]} · Flights and hotels: mock`;
+    `Racing (F1 dates from Jolpica): ${label[s.racing]} · Ride weather (Open-Meteo): ${label[s.weather]} · Shows (Ticketmaster): ${label[s.shows]} · Flights and hotels: mock`;
 }
 
 function update() {
@@ -145,7 +145,7 @@ function update() {
 async function loadData() {
   const f1 = fetchF1Calendar(state.today).then((races) => {
     state.races = races;
-    state.sources.f1 = races.length ? 'live' : 'fallback';
+    state.sources.racing = races.length ? 'live' : 'fallback';
     update();
   });
 
